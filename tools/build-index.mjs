@@ -1,36 +1,68 @@
-name: Build entries index
+#!/usr/bin/env node
+// Builds index.json (repo root) from every entries/*.md file. Run by
+// .github/workflows/build-index.yml on every push to main that touches
+// entries/**. Deliberately dependency-free Node built-ins only (via
+// entry-parser.mjs, its one sibling import) — this file gets copied into
+// whatdotmd/whatdotmd at tools/build-index.mjs, a repo this one has no
+// local checkout of, so no npm install step to rely on. Copy
+// entry-parser.mjs alongside it at tools/entry-parser.mjs.
+//
+// The frontmatter shape parsed here must exactly match what
+// src/lib/entryFilename.js's buildEntryFile() in the frontend repo writes —
+// that's the single source of truth for the schema. See
+// project/gh_backend/INDEX_BUILD.md for the full mechanism writeup.
 
-on:
-  push:
-    branches: [main]
-    paths: ["entries/**"]
-  workflow_dispatch: {}
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { parseEntryFrontmatter } from './entry-parser.mjs'
 
-permissions:
-  contents: write
+const ENTRIES_DIR = 'entries'
+const OUT_FILE = 'index.json'
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      # Full history, not the default shallow clone — build-index.mjs shells
-      # out to `git log` per entry file to stamp submitted_at, which needs
-      # each file's actual commit history, not just the tip commit.
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
+function parseEntry(filename, raw) {
+  const { slug, meta, content } = parseEntryFrontmatter(filename, raw)
+  const submitted_at = execFileSync(
+    'git',
+    ['log', '-1', '--format=%aI', '--', `${ENTRIES_DIR}/${filename}`],
+    { encoding: 'utf8' },
+  ).trim()
 
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
+  return {
+    slug,
+    author_github: meta.author_github,
+    title: meta.title,
+    kind: meta.kind,
+    target: meta.target,
+    tags: meta.tags ?? [],
+    license: meta.license,
+    optimised_for: meta.optimised_for,
+    description: meta.description,
+    content,
+    submitted_at,
+  }
+}
 
-      - run: node tools/build-index.mjs
+function main() {
+  const files = readdirSync(ENTRIES_DIR).filter((f) => f.endsWith('.md')).sort()
+  const entries = []
+  for (const filename of files) {
+    // Every real entry is "<slug>--<author_github>.md" — anything without
+    // the separator (a misplaced copy of the contributor template, a
+    // README, a .gitkeep-style stray file) is skipped rather than crashing
+    // the whole build or leaking a bogus entry onto the live site.
+    if (!filename.replace(/\.md$/, '').includes('--')) {
+      console.warn(`Skipping ${filename}: doesn't match <slug>--<author_github>.md`)
+      continue
+    }
+    try {
+      const raw = readFileSync(`${ENTRIES_DIR}/${filename}`, 'utf8')
+      entries.push(parseEntry(filename, raw))
+    } catch (err) {
+      console.warn(`Skipping ${filename}: ${err.message}`)
+    }
+  }
+  writeFileSync(OUT_FILE, `${JSON.stringify(entries, null, 2)}\n`)
+  console.log(`Wrote ${OUT_FILE} with ${entries.length} entries.`)
+}
 
-      # Only commits if index.json actually changed. Because this workflow's
-      # path filter is entries/** and this commit only touches index.json,
-      # the bot's own push doesn't re-trigger the workflow — no loop guard
-      # needed beyond the path filter already being narrow.
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: rebuild index.json"
-          file_pattern: index.json
+main()
