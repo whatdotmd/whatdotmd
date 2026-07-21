@@ -24,6 +24,12 @@ jobs:
         with:
           node-version: 24
 
+      # tools/issue-to-entry.mjs itself is dependency-free, but it shells out
+      # to tools/lint/cli.js, whose engine imports gpt-tokenizer + yaml — so
+      # the repo's deps have to be installed first, same as pr-check.yml.
+      # (package.json + package-lock.json are pushed by provision-lint-ci.mjs.)
+      - run: npm ci
+
       # The one load-bearing security rule of this whole workflow: the issue
       # body is attacker-controlled text. It must reach Node only via env —
       # never interpolated into a `run:` shell line — or a hostile issue body
