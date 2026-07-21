@@ -1,0 +1,48 @@
+name: Submit a whatdotmd entry
+description: Submit a CLAUDE.md/AGENTS.md entry for review (used by the whatdotmd.org /submit wizard, but you can fill this in by hand too).
+title: "New entry: "
+labels: [entry-submission]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form is how whatdotmd.org's `/submit` wizard files an entry.
+        Filing it directly works too, as long as the "Entry file" field below
+        keeps its `<!-- whatdotmd:entry-file:start/end -->` markers intact.
+
+        What happens next: opening this issue triggers an automated check
+        that extracts the entry file, lints it, and — if it passes — opens a
+        pull request for a maintainer to review. Your GitHub username here is
+        the one that gets credited (`author_github`), verified from your
+        actual login, not any text typed into the entry file itself.
+
+        If the check finds a problem, it comments on this issue explaining
+        what to fix. Edit this issue's description with the fix and the
+        check re-runs automatically — no need to open a new issue.
+  - type: textarea
+    id: entry-file
+    attributes:
+      label: Entry file
+      description: >-
+        The full entry file (YAML frontmatter + markdown body), wrapped by
+        the wizard in whatdotmd:entry-file sentinels. Don't edit the
+        sentinel/fence lines by hand — the automated check needs them intact
+        to find the payload.
+      placeholder: |
+        <!-- whatdotmd:entry-file:start -->
+        ```markdown
+        ---
+        title: "..."
+        author_github: "..."
+        kind: global
+        target: claude-md
+        tags: [...]
+        license: CC0-1.0
+        optimised_for: "..."
+        description: "..."
+        ---
+        <entry body>
+        ```
+        <!-- whatdotmd:entry-file:end -->
+    validations:
+      required: true
