@@ -160,15 +160,27 @@ function main() {
   writeFileSync(entryPath, correctedEntry)
 
   // 5. Lint via the same CLI + rule engine PR-check uses — not a
-  // reimplementation. cli.js exits 1 when blocked; its JSON report is still
-  // on stdout either way.
+  // reimplementation. cli.js exits 1 when blocked but still prints its JSON
+  // report to stdout, so a non-zero exit is expected and we read err.stdout.
+  // It only exits WITHOUT valid JSON if the lint process itself crashed
+  // (e.g. deps not installed) — an infra failure to surface loudly, not
+  // swallow into an opaque JSON.parse error on the maintainer.
   let reportRaw
   try {
     reportRaw = execFileSync('node', ['tools/lint/cli.js', entryPath], { encoding: 'utf8' })
   } catch (err) {
-    reportRaw = err.stdout
+    reportRaw = err.stdout ?? ''
   }
-  const report = JSON.parse(reportRaw)
+  let report
+  try {
+    report = JSON.parse(reportRaw)
+  } catch {
+    throw new Error(
+      'lint subprocess produced no parseable report — it likely failed to run ' +
+        "(is `npm ci` running before this step, and tools/lint present?). " +
+        `Raw output: ${JSON.stringify(reportRaw).slice(0, 300)}`,
+    )
+  }
 
   if (report.blocked) {
     commentOnIssue(ISSUE_NUMBER, formatReport(report))
