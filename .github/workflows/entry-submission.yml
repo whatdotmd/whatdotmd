@@ -1,0 +1,39 @@
+name: Entry submission (issue-ops)
+
+# Turns a wizard-filed (or hand-filed) entry-submission issue into a PR. See
+# project/gh_backend/ISSUE_SUBMISSION.md for the full design and trust model.
+# Gated on the entry-submission label so ordinary issue-tracker traffic is
+# never touched — this workflow does nothing unless the label is present.
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  process:
+    if: contains(github.event.issue.labels.*.name, 'entry-submission')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # The one load-bearing security rule of this whole workflow: the issue
+      # body is attacker-controlled text. It must reach Node only via env —
+      # never interpolated into a `run:` shell line — or a hostile issue body
+      # is remote command execution against this repo's write token. See
+      # ISSUE_SUBMISSION.md's trust model section.
+      - name: Extract, lint, and open/update a PR
+        run: node tools/issue-to-entry.mjs
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
