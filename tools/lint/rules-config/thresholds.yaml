@@ -1,0 +1,6 @@
+# BLOAT thresholds by entry kind, in tokens. Build spec §6.3.
+bloat:
+  global: 1500
+  project-template: 1500
+  preamble: 400
+  section: 400
