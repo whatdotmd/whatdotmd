@@ -1,0 +1,15 @@
+# VAGUE (warn) — unenforceable directives. Build spec §6.2.
+# Suppressed on a line that also contains a concrete operator (always,
+# never, before, after, unless, a file path, or a backticked command) —
+# see the suppression heuristic in rules/vague.js.
+phrases:
+  - "be careful"
+  - "be sensible"
+  - "be smart about it"
+  - "use common sense"
+  - "use good judgment"
+  - "use your best judgment"
+  - "when appropriate"
+  - "as needed"
+  - "if necessary, do the right thing"
+  - "keep it professional"
