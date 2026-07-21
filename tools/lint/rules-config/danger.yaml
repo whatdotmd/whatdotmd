@@ -1,0 +1,27 @@
+# DANGER (block) — the one rule that gates merge. Deliberately paranoid,
+# high-recall regex; a human adjudicates every hit (see rules/danger.js
+# design note — do NOT add negation detection to "fix" false positives like
+# "never read .env files"). Build spec §6.5.
+remote_execution:
+  - 'curl[^\n]{0,160}\|\s*(ba|z|da)?sh'
+  - 'wget[^\n]{0,160}\|\s*(ba|z|da)?sh'
+  - 'iwr[^\n]{0,160}\|\s*iex'
+  - '(fetch|download|retrieve)[^\n]{0,80}(and\s+)?(run|execute|eval)'
+instruction_fetching:
+  - '(read|fetch|load|follow)[^\n]{0,80}(instructions|prompt|rules)[^\n]{0,80}https?://'
+  - 'https?://[^\s)]{8,}[^\n]{0,80}(for (further|additional|updated) instructions)'
+secrets_exfiltration:
+  - '(read|cat|print|send|post|upload|include|transmit)[^\n]{0,80}\.env\b'
+  - '(read|send|post|upload|transmit|paste)[^\n]{0,80}(api[_ ]?key|secret|credential|token|password)'
+  - '(~|\$HOME)/\.(aws|ssh|config)\b'
+  - '(id_rsa|id_ed25519|\.pem\b|\.npmrc\b|\.netrc\b)'
+config_tampering:
+  - '(edit|modify|write|append|update)[^\n]{0,80}(settings\.json|\.claude/|hooks|\.mcp\.json|mcp[_ ]config)'
+  - '(add|install|register)[^\n]{0,60}(hook|mcp server)'
+concealment:
+  - "(do not|don't|never) (tell|inform|mention to|show) the (user|human)"
+  - '(hide|conceal|without the user noticing|silently) (this|the following|these actions)'
+  - '(ignore|disregard|override) (previous|prior|the above|all other) (instructions|rules)'
+privilege:
+  - 'sudo\s'
+  - '(disable|bypass|skip)[^\n]{0,60}(safety|permission|approval|confirmation|sandbox)'
