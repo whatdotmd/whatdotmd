@@ -1,0 +1,10 @@
+{
+  "name": "whatdotmd-backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "gpt-tokenizer": "^3.4.0",
+    "yaml": "^2.9.0"
+  }
+}
