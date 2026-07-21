@@ -1,0 +1,16 @@
+# REDUNDANT (warn) — instructions the agent already follows by default.
+# Editable pattern list; keep alphabetized. Build spec §6.1.
+phrases:
+  - "add comments where appropriate"
+  - "avoid bugs"
+  - "be accurate"
+  - "be helpful"
+  - "do not hallucinate"
+  - "follow best practices"
+  - "follow REST conventions"
+  - "use meaningful variable names"
+  - "write clean code"
+  - "write good code"
+  - "write high quality code"
+  - "you are a helpful assistant"
+  - "you are an expert"
