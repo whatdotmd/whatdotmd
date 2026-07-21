@@ -1,0 +1,41 @@
+name: PR entry lint (comment)
+
+# Trusted half of the two-workflow split (see project/gh_backend/PR_CHECK.md).
+# Triggered by pr-check.yml finishing, NOT by the pull_request event itself
+# — so it always runs main's own code with main's own workflow file, never
+# anything from the fork. This is the only piece of the pair with write
+# access (to post the PR comment); it must never check out or execute
+# anything the PR itself contributed.
+on:
+  workflow_run:
+    workflows: ["PR entry lint (check)"]
+    types: [completed]
+
+permissions:
+  pull-requests: write
+  actions: read
+
+jobs:
+  comment:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: lint-report
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: node tools/lint/report/post-comment.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
