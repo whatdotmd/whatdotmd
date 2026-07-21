@@ -1,0 +1,12 @@
+# CONTRADICTION (warn, low-confidence) — fires only if BOTH sides of a pair
+# match somewhere in the entry. Ship with exactly these four; tuning further
+# is community work, not weekend polish. Build spec §6.4.
+pairs:
+  - a: "always ask (before|first)"
+    b: "(act|proceed) (autonomously|without asking|independently)"
+  - a: "never (commit|push)"
+    b: "commit (early|often|after every)"
+  - a: "keep responses (short|brief|terse|concise)"
+    b: "(explain|elaborate|be thorough) (in detail|thoroughly|fully)"
+  - a: "never use emoji"
+    b: "use emoji"
