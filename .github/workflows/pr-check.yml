@@ -1,0 +1,57 @@
+name: PR entry lint (check)
+
+# Untrusted half of the two-workflow split (see project/gh_backend/PR_CHECK.md).
+# Runs against the fork's own code with NO secrets and read-only permissions
+# — safe even if a hostile PR edits this repo's own tools/lint/*.js, since
+# there's nothing here for it to steal or corrupt. It never posts to the PR
+# directly; it only uploads a report artifact for pr-comment.yml to read.
+on:
+  pull_request:
+    paths: ["entries/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - run: npm ci
+
+      - name: List changed entry files
+        run: |
+          git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            -- 'entries/*.md' > changed-entries.txt
+          cat changed-entries.txt
+
+      - name: Run linter
+        id: lint
+        run: node tools/lint/cli.js $(cat changed-entries.txt) > lint-report.json
+        continue-on-error: true
+
+      - run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: lint-report
+          path: |
+            lint-report.json
+            pr-number.txt
+          retention-days: 1
+
+      # Surfaces as a failing (red) check on the PR when any finding is
+      # severity 'block' — a human still decides whether to merge anyway
+      # (see the DANGER rule's own message in tools/lint/rules/danger.js).
+      - name: Fail check on blocking findings
+        if: steps.lint.outcome == 'failure'
+        run: exit 1
