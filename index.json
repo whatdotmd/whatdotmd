@@ -1,5 +1,20 @@
 [
   {
+    "slug": "test-fixture-clean-pass",
+    "author_github": "thiasosltd",
+    "title": "Test Fixture — Clean Pass",
+    "kind": "global",
+    "target": "claude-md",
+    "tags": [
+      "testing"
+    ],
+    "license": "CC0-1.0",
+    "optimised_for": "everything",
+    "description": "Linter test fixture: a well-formed entry expected to pass with zero findings.",
+    "content": "# CLAUDE.md — Clean Pass Fixture\n\nThesis: this file exists to confirm the linter reports zero findings on a\nwell-formed entry, as a baseline before the other four fixtures each\ntrigger one deliberate rule.\n\n### Commit discipline\n- Group changes into commits that pass tests on their own; a commit that\n  breaks the build is not done yet.\n- Write commit messages that state the reason for the change, not a\n  restatement of the diff.\n\n## File scope\n- Touch only the files required by the current task. If a fix reveals\n  unrelated dead code, name it in the PR description rather than deleting\n  it unasked.\n\n## Testing\n- Run the project's existing test command before proposing a change as\n  finished. A change with no test command available should say so\n  explicitly rather than being reported as verified.",
+    "submitted_at": "2026-07-21T22:02:42Z"
+  },
+  {
     "slug": "the-analyst",
     "author_github": "whatdotmd",
     "title": "The Analyst",
